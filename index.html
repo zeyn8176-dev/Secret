@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRESENCE — Digital Smart Attendance</title>
+<link rel="icon" type="image/png" href="icon.png" id="favicon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="icon.png" alt="PRESENCE icon" class="brand-icon" onerror="this.onerror=null;if(window.PRESENCE_ICON)this.src=window.PRESENCE_ICON">
+    </div>
+
+    <div class="controls">
+      <button class="nav-btn" id="btnScan" type="button">
+        <svg viewBox="0 0 24 24"><path d="M3 7V4a1 1 0 0 1 1-1h3M17 3h3a1 1 0 0 1 1 1v3M21 17v3a1 1 0 0 1-1 1h-3M7 21H4a1 1 0 0 1-1-1v-3M7 12h10"/></svg>
+        <span>Scan QR</span>
+      </button>
+
+      <button class="nav-btn" id="btnStop" type="button">
+        <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>
+        <span>Stop Camera</span>
+      </button>
+
+      <button class="nav-btn" id="btnStudents" type="button">
+        <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3.2 3.2 0 0 1 0 5.6M18 14.3c2 .7 3.5 2.7 3.5 5.7"/></svg>
+        <span>Registered Students</span>
+      </button>
+
+      <button class="nav-btn" id="btnRecord" type="button">
+        <svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 14l2 2 4-4"/></svg>
+        <span>Attendance Record</span>
+      </button>
+
+      <button class="nav-btn" id="btnHistory" type="button">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        <span>Attendance History</span>
+      </button>
+
+      <button class="register-btn" id="btnRegister" type="button">Register Student</button>
+    </div>
+
+    <div class="sidebar-foot">
+      <span id="statusDot" class="dot"></span>
+      <span id="statusText">Camera off</span>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <div class="orb"></div><div class="orb"></div><div class="orb"></div>
+    <header class="title">
+      <h1><img src="icon.png" alt="" class="title-icon" onerror="this.onerror=null;if(window.PRESENCE_ICON)this.src=window.PRESENCE_ICON"> PRESENCE</h1>
+      <p>Digital Smart Attendance</p>
+    </header>
+
+    <section class="stage" id="stage">
+
+      <!-- Scanner view -->
+      <div class="scanner-area" id="scannerArea">
+        <div class="camera-box" id="cameraBox">
+          <video id="video" playsinline muted></video>
+          <canvas id="scanCanvas" hidden></canvas>
+          <div class="reticle" id="reticle" hidden><i></i><i></i><i></i><i></i></div>
+          <div class="camera-placeholder" id="cameraPlaceholder">
+            <img src="icon.png" alt="" onerror="this.onerror=null;if(window.PRESENCE_ICON)this.src=window.PRESENCE_ICON">
+            <p>Camera is off</p>
+            <small>Press <b>Scan QR</b> for attendance</small>
+          </div>
+        </div>
+        <p class="scan-note">Note: QR Scanner cannot read your information if you are not a registered student</p>
+      </div>
+
+      <!-- Attendance history: calendar view (replaces the camera panel) -->
+      <div class="calendar-area" id="calendarArea" hidden>
+        <div class="card cal-card">
+          <div class="cal-head">
+            <button type="button" class="ghost cal-nav" id="calPrev" aria-label="Previous month">&#8249;</button>
+            <select id="calMonth" aria-label="Month"></select>
+            <select id="calYear" aria-label="Year"></select>
+            <button type="button" class="ghost cal-nav" id="calNext" aria-label="Next month">&#8250;</button>
+            <button type="button" class="ghost" id="calToday">Today</button>
+            <span class="cal-spacer"></span>
+            <button type="button" class="ghost" id="btnExport">Export CSV</button>
+            <button type="button" class="danger" id="btnClearHistory">Clear History</button>
+          </div>
+          <div class="cal-dow" id="calDow"></div>
+          <div class="cal-grid" id="calGrid"></div>
+          <p class="cal-hint">Pick a date to see who attended, by course and year level</p>
+        </div>
+      </div>
+
+      <!-- Attendance Record: today only (a timeline of today's scans) -->
+      <div class="today-area" id="todayArea" hidden>
+        <div class="card cal-card">
+          <div class="today-head">
+            <div><h2>Today</h2><p id="todayDate"></p></div>
+            <div class="today-actions">
+              <button type="button" class="ghost" id="btnExportRecord">Export CSV</button>
+              <button type="button" class="danger" id="btnClearRecord">Clear</button>
+            </div>
+          </div>
+          <div id="todayList"></div>
+        </div>
+      </div>
+
+      <!-- Right-side information panel -->
+      <aside class="side-panel" id="sidePanel" hidden>
+        <div class="panel-head">
+          <button type="button" class="back-btn" id="panelBack" hidden>&#8592; Back</button>
+          <h2 id="panelTitle">Student Information</h2>
+          <span class="panel-sub" id="panelSub"></span>
+        </div>
+        <div class="panel-body" id="panelBody"></div>
+      </aside>
+
+      <!-- Register view (centered, aligned with title) -->
+      <div class="register-area" id="registerArea" hidden>
+        <form class="card form-card" id="registerForm" novalidate autocomplete="off">
+          <h2>Student Registration</h2>
+          <p class="hint">A unique QR code based on the Student ID will be generated. You can download it right after registering.</p>
+
+          <div class="photo-row">
+            <label class="photo-drop" for="photoInput" id="photoDrop">
+              <img id="photoPreview" alt="" hidden>
+              <span id="photoHint">
+                <svg viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
+                Student Photo
+              </span>
+            </label>
+            <input type="file" id="photoInput" accept="image/*" hidden>
+            <div class="photo-actions">
+              <button type="button" class="ghost" id="btnPickPhoto">Choose Image</button>
+              <button type="button" class="ghost" id="btnEditPhoto" hidden>Crop / Edit Photo</button>
+              <small>JPG or PNG &middot; you can crop it after choosing</small>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label for="firstName">First Name</label>
+              <input id="firstName" type="text" maxlength="50" required>
+            </div>
+            <div class="field">
+              <label for="lastName">Last Name</label>
+              <input id="lastName" type="text" maxlength="50" required>
+            </div>
+          </div>
+          <div class="field">
+            <div class="lbl" id="sexLbl">Sex</div>
+            <div class="seg" id="sexSeg" role="radiogroup" aria-labelledby="sexLbl">
+              <label><input type="radio" name="sex" value="Male"><span>Male</span></label>
+              <label><input type="radio" name="sex" value="Female"><span>Female</span></label>
+            </div>
+          </div>
+          <div class="field">
+            <label for="course">Course</label>
+            <input id="course" type="text" list="courseList" maxlength="80" required>
+            <datalist id="courseList">
+              <option value="BS Information Technology">
+              <option value="BS Business Administration">
+              <option value="BS Accountancy">
+              <option value="BS Education">
+              <option value="BS Nursing">
+              <option value="BS Engineering">
+            </datalist>
+          </div>
+          <div class="field">
+            <div class="lbl" id="yearLbl">Year Level</div>
+            <div class="seg" id="yearSeg" role="radiogroup" aria-labelledby="yearLbl">
+              <label><input type="radio" name="yearLevel" value="1st Year"><span>1st Year</span></label>
+              <label><input type="radio" name="yearLevel" value="2nd Year"><span>2nd Year</span></label>
+              <label><input type="radio" name="yearLevel" value="3rd Year"><span>3rd Year</span></label>
+              <label><input type="radio" name="yearLevel" value="4th Year"><span>4th Year</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="section">Section</label>
+            <input id="section" type="text" maxlength="20" required>
+          </div>
+
+          <p class="form-error" id="formError" role="alert"></p>
+
+          <div class="form-actions">
+            <button type="button" class="ghost" id="btnCancelReg">Cancel</button>
+            <button type="submit" class="primary">Register &amp; Generate QR</button>
+          </div>
+        </form>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<!-- QR result modal -->
+<div class="modal" id="qrModal" hidden>
+  <div class="modal-card">
+    <div class="success-check" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="23"/><path d="M15 27l8 8 14-16"/></svg></div>
+    <h2>Registration Successful</h2>
+    <p class="hint" id="qrSubtitle"></p>
+    <div class="qr-holder"><div id="qrCode"></div></div>
+    <p class="qr-id" id="qrId"></p>
+    <p class="mail-status ok">Saved in the system. This student can now be scanned for attendance.</p>
+    <div class="form-actions">
+      <button type="button" class="ghost" id="btnDownloadQR">Download QR</button>
+      <button type="button" class="primary" id="btnCloseQR">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm modal (used for removing a student) -->
+<div class="modal" id="confirmModal" hidden>
+  <div class="modal-card">
+    <h2 id="confirmTitle">Are you sure?</h2>
+    <p class="hint" id="confirmText"></p>
+    <div class="form-actions">
+      <button type="button" class="ghost" id="confirmNo">Cancel</button>
+      <button type="button" class="danger" id="confirmYes">Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- Photo crop modal -->
+<div class="modal" id="cropModal" hidden>
+  <div class="modal-card crop-card">
+    <h2>Crop Photo</h2>
+    <p class="hint">Drag the photo to move it. Use the slider, mouse wheel or pinch to zoom. The circle is what will be shown.</p>
+    <div class="crop-stage" id="cropStage">
+      <canvas id="cropCanvas" width="300" height="300"></canvas>
+      <div class="crop-mask"></div>
+    </div>
+    <div class="crop-tools">
+      <button type="button" class="ghost" id="cropRotate" title="Rotate 90 degrees">&#10227; Rotate</button>
+      <span class="crop-zoom-label" aria-hidden="true">&minus;</span>
+      <input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" aria-label="Zoom">
+      <span class="crop-zoom-label" aria-hidden="true">+</span>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="ghost" id="cropCancel">Cancel</button>
+      <button type="button" class="primary" id="cropApply">Use Photo</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Libraries (loaded from CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
