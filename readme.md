@@ -134,6 +134,9 @@ The QR code contains only the Student ID (for example `PRS-2026-0001`).
 ## Author
 
 Mark S. Velasco
+
 Khrisson Jules O. Sumagaysay
+
 Kent Lester R. Tigbayan
+
 Ian Nadela
